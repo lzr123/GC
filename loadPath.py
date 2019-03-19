@@ -197,11 +197,11 @@ if __name__  == '__main__':
     corr_track = line.trackCorrection(lng_src_baidu, lat_src_baidu, lng_src_m, lat_src_m)
 
     index = 2
+    plt.axis('equal')
     plt.subplot(121)
     plt.plot(lng_std_m, lat_std_m, 'o-')
     plt.plot(round_data['lng_m'][index], round_data['lat_m'][index], 'gx')
-    # plt.plot(lng_sta_m, lat_sta_m, '*')
-    # plt.plot(lng_arv, lat_arv, 'gv')
+    plt.grid()
     plt.plot(corr_track['lng_m'][index], corr_track['lat_m'][index], 'rv-')
 
     plt.subplot(122)

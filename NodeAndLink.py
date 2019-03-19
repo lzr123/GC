@@ -34,8 +34,8 @@ class Link():
         self.upstream_node = upstream_node
         self.downstream_node = downstream_node
         self.length = self.getLength()
-        self.direction = self.getDirection()
-        self._theta = self.polyfit()
+        # self.direction = self.getDirection()
+        # self._theta = self.polyfit()
 
     def __str__(self):
         string = 'Link[(%f, %f), (%f, %f)]' % (self.upstream_node.lng_m, self.upstream_node.lat_m,
@@ -51,18 +51,18 @@ class Link():
         length = np.sqrt(lng_def**2 + lat_def**2)
         return length
 
-    def getDirection(self):
-        lng_def = self.upstream_node.lng_m - self.downstream_node.lng_m
-        lat_def = self.upstream_node.lat_m - self.downstream_node.lat_m
-        vector = np.array([lng_def, lat_def]) / self.length
-        return vector
-
-    def polyfit(self):
-        x = np.array([self.upstream_node.lng_m, self.downstream_node.lng_m])
-        y = np.array([self.upstream_node.lat_m, self.downstream_node.lat_m])
-        theta = np.polyfit(x, y, deg=1)
-        theta = np.array([theta[0], -1, theta[1]])
-        return theta
+    # def getDirection(self):
+    #     lng_def = self.upstream_node.lng_m - self.downstream_node.lng_m
+    #     lat_def = self.upstream_node.lat_m - self.downstream_node.lat_m
+    #     vector = np.array([lng_def, lat_def]) / self.length
+    #     return vector
+    #
+    # def polyfit(self):
+    #     x = np.array([self.upstream_node.lng_m, self.downstream_node.lng_m])
+    #     y = np.array([self.upstream_node.lat_m, self.downstream_node.lat_m])
+    #     theta = np.polyfit(x, y, deg=1)
+    #     theta = np.array([theta[0], -1, theta[1]])
+    #     return theta
 
 class Line():
     def __init__(self, start_station, end_station, node_list, link_list):
@@ -80,55 +80,34 @@ class Line():
         distance = np.abs(np.dot(point, link._theta.T)) / np.sqrt(link._theta[0]**2 + link._theta[1]**2)
         return distance
 
-
-    # def __evalProjPoint(self, x_m, y_m, link):
-    #     ''' Calculate the projection point on the line'''
-    #
-    #     # coordinate of p1
-    #     x1 = link.upstream_node.lng_m
-    #     y1 = link.upstream_node.lat_m
-    #
-    #     # cooridnate of p2
-    #     x2 = link.downstream_node.lng_m
-    #     y2 = link.downstream_node.lat_m
-    #
-    #     t = ((x1 - x_m) * (x1 - x2) - (y1 - y_m) * (y2 - y1)) / ((y2 - y1)**2 + (x1 - x2)**2)
-    #
-    #     # result coordinate
-    #     x = x1 + t * (x2 - x1)
-    #     y = y1 + t * (y2 - y1)
-    #
-    #     plt.plot([x1, x2], [y1, y2], 'bo-')
-    #     plt.plot([x_m, x], [y_m, y], 'ro-')
-    #     plt.grid()
-    #     plt.show()
-    #
-    #     print(np.array([x2-x1, y2-y1]).dot(np.array([x-x_m, y-y_m])))
-    #
-    #     return np.array([x, y])
-
     def __evalProjPoint(self, x_m, y_m, link):
-        p1 = np.array([link.upstream_node.lng_m, link.upstream_node.lat_m], dtype=np.float64)
-        p2 = np.array([link.downstream_node.lng_m, link.downstream_node.lat_m], dtype=np.float64)
-        p3 = np.array([x_m, y_m], dtype=np.float64)
-        v1 = p3 - p1
-        v2 = p2 - p1
+        x1 = link.upstream_node.lng_m
+        y1 = link.upstream_node.lat_m
 
-        k = (v1.dot(v2))/(np.linalg.norm(v2)**2)
-        # print(k)
-        p0 = k * v2+ p1
+        x2 = link.downstream_node.lng_m
+        y2 = link.downstream_node.lat_m
 
-        plt.plot([p1[0], p2[0]], [p1[1], p2[1]], 'bo-')
-        plt.plot([p3[0], p0[0]], [p3[1], p0[1]], 'ro-')
-        plt.grid()
-        plt.show()
+        A = np.array([[x2 - x1, -(y1 - y2)],
+                      [y2 - y1, -(x2 - x1)]])
+
+        b = np.array([x_m - x1, y_m - y1])
+
+        r = np.linalg.solve(A, b)
+        t = r[0]
+
+        x = x1 + t * (x2 - x1)
+        y = y1 + t * (y2 - y1)
+
+        p0 = np.array([x, y])
 
         return p0
 
 
 
-    def __pointInRange(self, point, range_x, range_y):
-        if (range_x[0] <= point[0] <= range_x[1]) and (range_y[0] <= point[1] <= range_y[1]):
+    def __pointInRange(self, p1, p2, p0):
+        v1 = p2 - p1
+        v2 = p0 - p1
+        if np.cross(v1, v2) < 1e-13 and v1.dot(v2) >= 0:
             return True
         else:
             return False
@@ -182,40 +161,32 @@ class Line():
             for x, y, x_m, y_m in zip(track['lng'], track['lat'], track['lng_m'], track['lat_m']):
                 close_link_1st = {'link': None, 'dist': np.inf}
 
-                p1 = None
+                p0 = None
                 distance = 0
 
 
                 for link in self.link_list:
-                    # distance = self.__evalDistanceToLink(x_m, y_m, link)
+
+                    p1 = np.array([link.upstream_node.lng_m, link.upstream_node.lat_m])
+                    p2 = np.array([link.downstream_node.lng_m, link.downstream_node.lat_m])
 
                     proj = self.__evalProjPoint(x_m, y_m, link)
 
-                    distance = np.sqrt((x_m - proj[0])**2 + (y_m - proj[1])**2)
+                    if self.__pointInRange(p1, p2, proj):
 
-                    if distance >= 10:
-                        continue
-                    elif distance <= close_link_1st['dist']:
-                        close_link_1st['dist'] = distance
-                        close_link_1st['link'] = link
-                        p1 = proj
+                        distance = np.sqrt((x_m - proj[0])**2 + (y_m - proj[1])**2)
 
-
-                link_1 = close_link_1st['link']
-
+                        if distance >= 100:
+                            continue
+                        elif distance <= close_link_1st['dist']:
+                            close_link_1st['dist'] = distance
+                            close_link_1st['link'] = link
+                            p0 = proj
 
 
-
-                # range_1x = (min(link_1.upstream_node.lng_m, link_1.downstream_node.lng_m),
-                #             max(link_1.upstream_node.lng_m, link_1.downstream_node.lng_m))
-                #
-                # range_1y = (min(link_1.upstream_node.lat_m, link_1.downstream_node.lat_m),
-                #             max(link_1.upstream_node.lat_m, link_1.downstream_node.lat_m))
-
-                # if p1 is not None and self.__pointInRange(p1, range_1x, range_1y):
-                if p1 is not None:
-                    new_track['lng_m'].append(p1[0])
-                    new_track['lat_m'].append(p1[1])
+                if p0 is not None:
+                    new_track['lng_m'].append(p0[0])
+                    new_track['lat_m'].append(p0[1])
 
             corrected_track.append(new_track)
         return pd.DataFrame(corrected_track)
