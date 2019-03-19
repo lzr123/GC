@@ -107,7 +107,7 @@ class Line():
     def __pointInRange(self, p1, p2, p0):
         v1 = p2 - p1
         v2 = p0 - p1
-        if np.cross(v1, v2) < 1e-13 and v1.dot(v2) >= 0:
+        if np.cross(v1, v2) < 1e-14 and v1.dot(v2) >= 0:
             return True
         else:
             return False
@@ -176,7 +176,7 @@ class Line():
 
                         distance = np.sqrt((x_m - proj[0])**2 + (y_m - proj[1])**2)
 
-                        if distance >= 100:
+                        if distance >= 15:
                             continue
                         elif distance <= close_link_1st['dist']:
                             close_link_1st['dist'] = distance
