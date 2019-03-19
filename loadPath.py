@@ -198,15 +198,15 @@ if __name__  == '__main__':
 
     for index in range(8):
         plt.axis('equal')
-        plt.subplot(121)
+        # plt.subplot(121)
         plt.plot(lng_std_m, lat_std_m, 'o-')
         plt.plot(round_data['lng_m'][index], round_data['lat_m'][index], 'gx')
         plt.grid()
         plt.plot(corr_track['lng_m'][index], corr_track['lat_m'][index], 'rv-')
 
-        plt.subplot(122)
-        plt.plot(lng_std, lat_std, 'o-')
-        # plt.plot(lng_src_baidu, lat_src_baidu)
-        plt.plot(lng_sta, lat_sta, '*')
-
-        plt.show()
+        # plt.subplot(122)
+        # plt.plot(lng_std, lat_std, 'o-')
+        # # plt.plot(lng_src_baidu, lat_src_baidu)
+        # plt.plot(lng_sta, lat_sta, '*')
+        #
+        # plt.show()

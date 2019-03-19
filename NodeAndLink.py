@@ -164,7 +164,6 @@ class Line():
                 p0 = None
                 distance = 0
 
-
                 for link in self.link_list:
 
                     p1 = np.array([link.upstream_node.lng_m, link.upstream_node.lat_m])

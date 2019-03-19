@@ -18,17 +18,21 @@ if __name__ == '__main__':
     x_m = p[0]
     y_m = p[1]
 
-    t = ((x1 - x_m) * (x1 - x2) - (y1 - y_m) * (y2 - y1)) / ((y2 - y1) ** 2 + (x1 - x2) ** 2)
-    print(x1 - x_m, x1 - x2, y1 - y_m, y2 - y1)
 
-    # result coordinate
+    A = np.array([[x2 - x1, -(y1 - y2)],
+                  [y2 - y1, -(x2 - x1)]])
+
+    b = np.array([x_m - x1, y_m - y1])
+
+    r = np.linalg.solve(A, b)
+    t = r[0]
+
     x = x1 + t * (x2 - x1)
     y = y1 + t * (y2 - y1)
 
-    v = np.array([x_m - x, y_m - y])
-    print(t, v.dot(p2 - p1))
+    p0 = np.array([x, y])
 
-
+    plt.axis('equal')
     plt.plot([x1, x2], [y1, y2], 'bo-')
     plt.scatter(x_m, y_m)
     plt.scatter(x, y)
